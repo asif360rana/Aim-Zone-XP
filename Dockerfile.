@@ -1,32 +1,14 @@
 
-# Use an official PHP 8.1 image with Apache pre-installed
-FROM php:8.1-apache
+# Enable Apache rewrite module
+RUN a2enmod rewrite && \
+sed -i '/<Directory \/var\/www\/html>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
-# Set the working directory inside the container
-WORKDIR /var/www/html
+# Copy application files
+COPY . /var/www/html/
 
-# Install necessary PHP extensions: curl for API calls, json for data handling
-RUN docker-php-ext-install curl json
+# Set proper permissions
+RUN touch /var/www/html/users.json /var/www/html/error.log && \
+chown -R www-data:www-data /var/www/html && \
+chmod -R 755 /var/www/html
 
-# Install Composer (PHP dependency manager)
-# -sS (silent, show errors)
-# --install-dir=/usr/local/bin (system-wide installation)
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-# Copy the Composer dependency file
-COPY composer.json .
-
-# Install PHP dependencies defined in composer.json
-# --no-dev skips development dependencies
-# --optimize-autoloader improves performance
-RUN composer install --no-dev --optimize-autoloader
-
-# Copy all application files (index.php, .htaccess, users.json, etc.) into the working directory
-COPY . .
-
-# Set permissions for the users.json file, which is used for user data storage
-# The web server (Apache) runs as the 'www-data' user, so it needs ownership/write access.
-RUN chown www-data:www-data /var/www/html/users.json
-RUN chmod 664 /var/www/html/users.json
-
-# Note: The base image `php:8.1-apache` automatically exposes port 80 and starts Apache.
+EXPOSE 80
