@@ -12,10 +12,11 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . .
 
-# Set proper permissions
-RUN chown -R www-data:www-data /var/www/html \
+# Create files and set proper permissions
+RUN touch users.json error.log \
+    && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
-    && chmod 666 users.json error.log
+    && chmod 664 users.json error.log
 
 # Create custom Apache config
 RUN echo 'ServerName localhost' >> /etc/apache2/apache2.conf
